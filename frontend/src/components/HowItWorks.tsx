@@ -82,11 +82,7 @@ const HowItWorks = () => {
             className="grid max-w-xl grid-cols-1 gap-x-8 gap-y-16 lg:max-w-none lg:grid-cols-4"
           >
             {steps.map((step) => (
-              <motion.div
-                variants={item}
-                key={step.name}
-                className="flex flex-col items-start"
-              >
+              <div key={step.name} className="flex flex-col items-start ">
                 <div className="rounded-md bg-primary/10 p-2 ring-1 ring-primary/10">
                   <step.icon
                     className="h-6 w-6 text-primary"
@@ -97,14 +93,14 @@ const HowItWorks = () => {
                   <div className="flex-none rounded-full bg-gray-400/10 p-1 ring-1 ring-gray-400/20">
                     <div className="h-1.5 w-1.5 rounded-full bg-primary" />
                   </div>
-                  <h3 className="text-lg font-semibold leading-7 tracking-tight text-gray-900">
+                  <h3 className="text-lg font-semibold leading-7 tracking-tight text-foreground">
                     {step.name}
                   </h3>
                 </div>
-                <p className="mt-4 text-base leading-7 text-gray-600">
+                <p className="mt-4 text-base leading-7 text-muted-foreground">
                   {step.description}
                 </p>
-              </motion.div>
+              </div>
             ))}
           </motion.dl>
         </div>
