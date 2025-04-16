@@ -48,7 +48,7 @@ const Navbar = () => {
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link to="/" className="text-xl font-bold text-primary">
-              File Vault
+              FileVault
             </Link>
           </div>
 

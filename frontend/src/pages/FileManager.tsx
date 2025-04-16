@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Upload, Download, File, EyeOff, Archive } from 'lucide-react';
 import lighthouse from '@lighthouse-web3/sdk';
+import AiChat from '../components/AiChat';
 
 interface FileItem {
   name: string;
@@ -120,8 +121,8 @@ const FileManager: React.FC = () => {
   const visibleFiles = uploadedFiles.filter(file => !file.isHidden);
 
   return (
-    <div className="min-h-screen bg-background py-12">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
+    <div className="min-h-screen pb-24" id="file-manager">
+      <div className="max-w-[calc(100%-384px)] mx-auto px-4 sm:px-6 lg:px-8 space-y-8 py-12">
         {/* First Container: Upload Section */}
         <div className="bg-card rounded-lg shadow-sm p-6 lg:p-8 border border-border">
           <div className="mb-8">
@@ -280,6 +281,7 @@ const FileManager: React.FC = () => {
           </div>
         </div>
       </div>
+      <AiChat />
     </div>
   );
 };
