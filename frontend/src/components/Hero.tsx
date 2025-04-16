@@ -13,11 +13,11 @@ const Hero = () => {
       <div className="py-24 sm:py-32">
         <div className="mx-auto max-w-7xl px-6 lg:px-8">
           <div className="mx-auto max-w-2xl text-center">
-            <h1 className="text-4xl font-bold tracking-tight text-gray-900 sm:text-6xl">
+            <h1 className="text-4xl font-bold tracking-tight text-foreground sm:text-6xl">
               Secure File Storage on the{' '}
               <span className="text-primary">Decentralized Web</span>
             </h1>
-            <p className="mt-6 text-lg leading-8 text-gray-600">
+            <p className="mt-6 text-lg leading-8 text-muted-foreground">
               Store your files securely on the Filecoin blockchain using Lighthouse storage. 
               Decentralized, encrypted, and always accessible.
             </p>
@@ -43,8 +43,8 @@ const Hero = () => {
                 <div className="flex justify-center">
                   <Shield className="h-12 w-12 text-primary" />
                 </div>
-                <h3 className="mt-6 text-sm font-medium text-gray-900">End-to-End Encryption</h3>
-                <p className="mt-2 text-sm text-gray-600">Your files are encrypted before upload</p>
+                <h3 className="mt-6 text-sm font-medium text-foreground">End-to-End Encryption</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Your files are encrypted before upload</p>
               </div>
 
               {/* Storage Feature */}
@@ -52,8 +52,8 @@ const Hero = () => {
                 <div className="flex justify-center">
                   <Database className="h-12 w-12 text-primary" />
                 </div>
-                <h3 className="mt-6 text-sm font-medium text-gray-900">Decentralized Storage</h3>
-                <p className="mt-2 text-sm text-gray-600">Files stored on IPFS & Filecoin</p>
+                <h3 className="mt-6 text-sm font-medium text-foreground">Decentralized Storage</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Files stored on IPFS & Filecoin</p>
               </div>
 
               {/* Cost Feature */}
@@ -61,8 +61,8 @@ const Hero = () => {
                 <div className="flex justify-center">
                   <Coins className="h-12 w-12 text-primary" />
                 </div>
-                <h3 className="mt-6 text-sm font-medium text-gray-900">Cost Effective</h3>
-                <p className="mt-2 text-sm text-gray-600">Pay only for what you store</p>
+                <h3 className="mt-6 text-sm font-medium text-foreground">Cost Effective</h3>
+                <p className="mt-2 text-sm text-muted-foreground">Pay only for what you store</p>
               </div>
             </div>
           </div>
