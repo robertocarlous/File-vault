@@ -1,7 +1,8 @@
-import { useState } from 'react'
-import { Button } from './ui/button'
-import { Upload, Download, File } from 'lucide-react'
-import lighthouse from '@lighthouse-web3/sdk'
+import { useState, useEffect } from 'react';
+import { Button } from '../components/ui/button';
+import { Upload, Download, File, EyeOff, Archive } from 'lucide-react';
+import lighthouse from '@lighthouse-web3/sdk';
+import AiChat from '../components/AiChat';
 
 interface FileItem {
   name: string
