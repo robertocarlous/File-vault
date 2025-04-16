@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Upload, Download, File, EyeOff, Archive } from 'lucide-react';
 import lighthouse from '@lighthouse-web3/sdk';
-import { useNavigate } from 'react-router-dom';
 
 interface FileItem {
   name: string;
@@ -19,7 +18,6 @@ const FileManager: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const navigate = useNavigate();
 
   // Load files from localStorage on mount
   useEffect(() => {
@@ -122,93 +120,83 @@ const FileManager: React.FC = () => {
   const visibleFiles = uploadedFiles.filter(file => !file.isHidden);
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-background py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-8">
         {/* First Container: Upload Section */}
-        <div className="bg-white rounded-lg shadow-lg p-6 lg:p-8">
+        <div className="bg-card rounded-lg shadow-sm p-6 lg:p-8 border border-border">
           <div className="mb-8">
-            <h1 className="text-3xl font-bold text-gray-900 mb-4">File Manager</h1>
-            <p className="text-gray-600 leading-relaxed">
-              Welcome to your secure file management hub! Here, you can upload and manage your files on the decentralized web using Filecoin and Lighthouse. Please note that once files are uploaded to the blockchain and IPFS, they are permanent and cannot be deleted. However, you can hide them from this list or archive them for organization. Start by selecting a file to upload below.
+            <h1 className="text-3xl font-bold text-foreground mb-4">File Manager</h1>
+            <p className="text-muted-foreground">
+              Upload and manage your files securely on the decentralized web.
             </p>
           </div>
 
-          {/* Upload Form */}
-          <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Upload New File</h2>
-            <p className="text-gray-600 mb-4">
-              Upload your files securely. Each file will be stored on IPFS with end-to-end encryption and a unique CID for retrieval.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <input
-                type="file"
-                onChange={handleFileSelect}
-                className="hidden"
-                id="file-upload"
-              />
-              <label
-                htmlFor="file-upload"
-                className="cursor-pointer inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 transition-colors w-full sm:w-auto"
+          <div className="space-y-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <input
+                  type="file"
+                  onChange={handleFileSelect}
+                  className="block w-full text-sm text-muted-foreground
+                    file:mr-4 file:py-2 file:px-4
+                    file:rounded-md file:border-0
+                    file:text-sm file:font-medium
+                    file:bg-primary file:text-primary-foreground
+                    hover:file:cursor-pointer hover:file:bg-primary/90"
+                />
+              </div>
+              <Button
+                onClick={handleUpload}
+                disabled={!selectedFile || isUploading}
+                className="w-full sm:w-auto"
               >
-                <Upload className="h-5 w-5 mr-2" />
-                Select File
-              </label>
-              {selectedFile && (
-                <div className="w-full sm:w-auto">
-                  <Button
-                    onClick={handleUpload}
-                    disabled={isUploading}
-                    className="w-full sm:w-auto inline-flex items-center"
-                  >
-                    {isUploading ? 'Uploading...' : 'Upload File'}
-                  </Button>
-                  {isUploading && (
-                    <div className="mt-2 text-sm text-gray-500">
-                      Upload Progress: {uploadProgress}%
-                    </div>
-                  )}
-                </div>
-              )}
+                <Upload className="h-4 w-4 mr-2" />
+                {isUploading ? 'Uploading...' : 'Upload'}
+              </Button>
             </div>
-            {selectedFile && !isUploading && (
-              <div className="mt-4 text-sm text-gray-500">
-                Selected: {selectedFile.name} ({formatBytes(selectedFile.size)})
+
+            {error && (
+              <p className="text-destructive text-sm">{error}</p>
+            )}
+
+            {isUploading && (
+              <div className="w-full bg-secondary rounded-full h-2">
+                <div
+                  className="bg-primary h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${uploadProgress}%` }}
+                />
               </div>
             )}
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
           </div>
         </div>
 
-        {/* Second Container: File List and Archived Files */}
-        <div className="bg-white rounded-lg shadow-lg p-6 lg:p-8">
+        {/* Second Container: File List */}
+        <div className="bg-card rounded-lg shadow-sm p-6 lg:p-8 border border-border">
           <div>
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">Your Files</h2>
-            <p className="text-gray-600 mb-4">
-              Below is a list of all visible files you’ve uploaded. Files on the blockchain are permanent, but you can hide or archive them here for better organization. Use the CID to download files anytime via a supported gateway.
-            </p>
+            <h2 className="text-xl font-semibold text-foreground mb-4">Your Files</h2>
             <div className="space-y-4">
               {visibleFiles.length === 0 ? (
-                <p className="text-gray-500 text-center py-4">
-                  No visible files uploaded yet. Upload your first file or check your archived files!
+                <p className="text-center text-muted-foreground py-8">
+                  No files uploaded yet. Upload your first file above!
                 </p>
               ) : (
                 <div className="grid gap-4">
                   {visibleFiles.map((file) => (
                     <div
                       key={file.cid}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
                     >
-                      <div className="flex items-center flex-1 mb-4 sm:mb-0">
-                        <File className="h-5 w-5 text-gray-400 mr-3" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                          <p className="text-xs text-gray-500">
+                      <div className="flex items-center flex-1 min-w-0">
+                        <File className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             Size: {formatBytes(file.size)} | Uploaded: {formatDate(file.uploadDate)}
                             {file.isArchived && ' | Archived'}
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2 flex-col sm:flex-row">
+                      <div className="flex gap-2 flex-col sm:flex-row mt-2 sm:mt-0 w-full sm:w-auto">
                         <a
                           href={`https://gateway.lighthouse.storage/ipfs/${file.cid}`}
                           target="_blank"
@@ -251,24 +239,24 @@ const FileManager: React.FC = () => {
 
             {/* Archived Files Section */}
             <div className="mt-8">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Archived Files</h3>
+              <h3 className="text-lg font-medium text-foreground mb-4">Archived Files</h3>
               {uploadedFiles.filter(file => file.isArchived).length > 0 ? (
                 <div className="grid gap-4">
                   {uploadedFiles.filter(file => file.isArchived).map((file) => (
                     <div
                       key={file.cid}
-                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-gray-100 rounded-lg"
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between p-4 bg-muted/50 rounded-lg border border-border"
                     >
-                      <div className="flex items-center flex-1">
-                        <File className="h-5 w-5 text-gray-400 mr-3" />
-                        <div>
-                          <p className="text-sm font-medium text-gray-900">{file.name}</p>
-                          <p className="text-xs text-gray-500">
+                      <div className="flex items-center flex-1 min-w-0">
+                        <File className="h-5 w-5 text-muted-foreground mr-3 flex-shrink-0" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{file.name}</p>
+                          <p className="text-xs text-muted-foreground">
                             Size: {formatBytes(file.size)} | Uploaded: {formatDate(file.uploadDate)} | Archived
                           </p>
                         </div>
                       </div>
-                      <div className="flex gap-2">
+                      <div className="flex gap-2 mt-2 sm:mt-0">
                         <a
                           href={`https://gateway.lighthouse.storage/ipfs/${file.cid}`}
                           target="_blank"
@@ -284,7 +272,7 @@ const FileManager: React.FC = () => {
                   ))}
                 </div>
               ) : (
-                <p className="text-gray-500 text-center py-4">
+                <p className="text-muted-foreground text-center py-4">
                   No files have been archived yet.
                 </p>
               )}
