@@ -68,7 +68,7 @@ const HowItWorks = () => {
           <p className="mt-2 text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
             How File Vault Works
           </p>
-          <p className="mt-6 text-lg leading-8 text-gray-600">
+          <p className="mt-6 text-lg leading-8 text-muted-foreground">
             Follow these simple steps to store your files securely on the
             decentralized web using Filecoin and Lighthouse storage.
           </p>
