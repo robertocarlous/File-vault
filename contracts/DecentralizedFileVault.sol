@@ -8,9 +8,9 @@ contract DecentralizedFileVault {
     address public owner; // Contract owner address
 
     enum SubscriptionTier {
-        BASIC,      // 0.01 ETH/month, 10 files
+        BASIC, // 0.01 ETH/month, 10 files
         PROFESSIONAL, // 0.02 ETH/month, 50 files
-        ENTERPRISE   // 0.05 ETH/month, unlimited files
+        ENTERPRISE // 0.05 ETH/month, unlimited files
     }
 
     struct FileRecord {
@@ -38,16 +38,19 @@ contract DecentralizedFileVault {
 
     struct PremiumFeatures {
         bool hasPrioritySupport; // Priority customer support
-        bool hasCustomDomain;    // Custom domain for sharing
-        bool hasAnalytics;       // Advanced analytics
+        bool hasCustomDomain; // Custom domain for sharing
+        bool hasAnalytics; // Advanced analytics
     }
 
-    // Mapping of user address => list of their uploaded files
-    mapping(address => FileRecord[]) private userFiles;
-    
+    // --- Storage Change: Replace dynamic array with count and indexed mapping ---
+    // mapping(address => FileRecord[]) private userFiles; // OLD - Gas intensive
+    mapping(address => uint256) private userFileCount; // NEW - Tracks number of files per user
+    mapping(address => mapping(uint256 => FileRecord)) private userFilesByIndex; // NEW - Stores files by user and index
+    // --- End Storage Change ---
+
     // Mapping of file CID => owner address
     mapping(string => address) private fileOwners;
-    
+
     // Mapping of file CID => access control list
     mapping(string => mapping(address => bool)) private fileAccess;
 
@@ -89,10 +92,7 @@ contract DecentralizedFileVault {
         uint256 totalPoints
     );
 
-    event DiscountApplied(
-        address indexed user,
-        uint256 discountPercentage
-    );
+    event DiscountApplied(address indexed user, uint256 discountPercentage);
 
     event PremiumFeaturePurchased(
         address indexed user,
@@ -115,12 +115,12 @@ contract DecentralizedFileVault {
 
     constructor() {
         owner = msg.sender;
-        
+
         // Initialize tier prices
         tierPrices[SubscriptionTier.BASIC] = 0.01 ether;
         tierPrices[SubscriptionTier.PROFESSIONAL] = 0.02 ether;
         tierPrices[SubscriptionTier.ENTERPRISE] = 0.05 ether;
-        
+
         // Initialize storage limits
         tierStorageLimits[SubscriptionTier.BASIC] = 10;
         tierStorageLimits[SubscriptionTier.PROFESSIONAL] = 50;
@@ -132,15 +132,15 @@ contract DecentralizedFileVault {
     function purchaseSubscription(SubscriptionTier tier) external payable {
         Subscription storage sub = subscriptions[msg.sender];
         uint256 price = tierPrices[tier];
-        
+
         // Apply discount if available
         if (sub.discountPercentage > 0) {
             price = price - ((price * sub.discountPercentage) / 100);
             sub.discountPercentage = 0; // Reset discount after use
         }
-        
+
         require(msg.value >= price, "Insufficient payment");
-        
+
         if (sub.isActive && block.timestamp < sub.endTime) {
             // Renew existing subscription
             sub.endTime += SUBSCRIPTION_DURATION;
@@ -150,10 +150,10 @@ contract DecentralizedFileVault {
             sub.endTime = block.timestamp + SUBSCRIPTION_DURATION;
             sub.isActive = true;
         }
-        
+
         sub.tier = tier;
         sub.storageLimit = tierStorageLimits[tier];
-        
+
         emit SubscriptionPurchased(
             msg.sender,
             sub.startTime,
@@ -167,39 +167,46 @@ contract DecentralizedFileVault {
     function purchasePremiumFeature(string calldata feature) external payable {
         require(msg.value >= PREMIUM_FEATURE_FEE, "Insufficient payment");
         PremiumFeatures storage features = premiumFeatures[msg.sender];
-        
+
         if (keccak256(bytes(feature)) == keccak256(bytes("prioritySupport"))) {
             features.hasPrioritySupport = true;
-        } else if (keccak256(bytes(feature)) == keccak256(bytes("customDomain"))) {
+        } else if (
+            keccak256(bytes(feature)) == keccak256(bytes("customDomain"))
+        ) {
             features.hasCustomDomain = true;
         } else if (keccak256(bytes(feature)) == keccak256(bytes("analytics"))) {
             features.hasAnalytics = true;
         } else {
             revert("Invalid feature");
         }
-        
+
         emit PremiumFeaturePurchased(msg.sender, feature, PREMIUM_FEATURE_FEE);
     }
 
     /// @notice Share a file with another address
     /// @param _cid The CID of the file to share
     /// @param _recipient The address to share the file with
-    function shareFile(
-        string calldata _cid,
-        address _recipient
-    ) external {
+    function shareFile(string calldata _cid, address _recipient) external {
         require(fileOwners[_cid] == msg.sender, "Not the file owner");
         require(!fileAccess[_cid][_recipient], "Already shared with recipient");
-        
+
         fileAccess[_cid][_recipient] = true;
-        
-        // Find the file in user's files and add to sharedWith array
-        for (uint i = 0; i < userFiles[msg.sender].length; i++) {
-            if (keccak256(bytes(userFiles[msg.sender][i].cid)) == keccak256(bytes(_cid))) {
-                userFiles[msg.sender][i].sharedWith.push(_recipient);
+
+        // --- Modify shareFile logic to use new storage structure ---
+        uint256 count = userFileCount[msg.sender];
+        bool found = false;
+        for (uint i = 0; i < count; i++) {
+            // Access file by index
+            FileRecord storage file = userFilesByIndex[msg.sender][i];
+            if (keccak256(bytes(file.cid)) == keccak256(bytes(_cid))) {
+                // Append to sharedWith (Note: this push can still be gas-intensive)
+                file.sharedWith.push(_recipient);
+                found = true;
                 break;
             }
         }
+        require(found, "File record not found for owner"); // Should not happen if fileOwners mapping is correct
+        // --- End modification ---
 
         emit FileShared(_cid, msg.sender, _recipient);
     }
@@ -222,9 +229,12 @@ contract DecentralizedFileVault {
         require(bytes(_fileType).length > 0, "File type required");
         require(_duration > 0, "Duration must be greater than 0");
         require(fileOwners[_cid] == address(0), "CID already exists");
-        
+
         Subscription storage sub = subscriptions[msg.sender];
-        require(userFiles[msg.sender].length < sub.storageLimit, "Storage limit reached");
+
+        // --- Modify uploadFile logic to use new storage structure ---
+        uint256 currentCount = userFileCount[msg.sender];
+        require(currentCount < sub.storageLimit, "Storage limit reached");
 
         // Calculate reward points
         uint256 rewardPoints = calculateRewardPoints(_duration);
@@ -233,8 +243,10 @@ contract DecentralizedFileVault {
         // Update discount if enough points
         if (sub.rewardPoints >= POINTS_TO_DISCOUNT) {
             uint256 discount = (sub.rewardPoints / POINTS_TO_DISCOUNT) * 10;
-            sub.discountPercentage = discount > MAX_DISCOUNT ? MAX_DISCOUNT : discount;
-            sub.rewardPoints = sub.rewardPoints % POINTS_TO_DISCOUNT;
+            sub.discountPercentage = discount > MAX_DISCOUNT
+                ? MAX_DISCOUNT
+                : discount;
+            sub.rewardPoints = sub.rewardPoints % POINTS_TO_DISCOUNT; // Keep remaining points
             emit DiscountApplied(msg.sender, sub.discountPercentage);
         }
 
@@ -251,7 +263,13 @@ contract DecentralizedFileVault {
             rewardPoints: rewardPoints
         });
 
-        userFiles[msg.sender].push(newFile);
+        // Store the file at the next index
+        userFilesByIndex[msg.sender][currentCount] = newFile;
+        // Increment the user's file count
+        userFileCount[msg.sender] = currentCount + 1;
+        // --- End modification ---
+
+        // Update owner and access mappings
         fileOwners[_cid] = msg.sender;
         fileAccess[_cid][msg.sender] = true;
 
@@ -296,14 +314,23 @@ contract DecentralizedFileVault {
     /// @return isActive Whether subscription is currently active
     function getSubscriptionDetails(
         address user
-    ) external view returns (
-        uint256 startTime,
-        uint256 endTime,
-        uint256 storageLimit,
-        bool isActive
-    ) {
+    )
+        external
+        view
+        returns (
+            uint256 startTime,
+            uint256 endTime,
+            uint256 storageLimit,
+            bool isActive
+        )
+    {
         Subscription storage sub = subscriptions[user];
-        return (sub.startTime, sub.endTime, sub.storageLimit, sub.isActive && block.timestamp < sub.endTime);
+        return (
+            sub.startTime,
+            sub.endTime,
+            sub.storageLimit,
+            sub.isActive && block.timestamp < sub.endTime
+        );
     }
 
     /// @notice Get user's reward points and discount information
@@ -325,17 +352,46 @@ contract DecentralizedFileVault {
     }
 
     // Add public getter functions for mappings
-    function getFileOwner(string calldata _cid) external view returns (address) {
+    function getFileOwner(
+        string calldata _cid
+    ) external view returns (address) {
         return fileOwners[_cid];
     }
 
-    function getFileAccess(string calldata _cid, address user) external view returns (bool) {
+    function getFileAccess(
+        string calldata _cid,
+        address user
+    ) external view returns (bool) {
         return fileAccess[_cid][user];
     }
 
-    function getUserPremiumFeatures(address user) external view returns (PremiumFeatures memory) {
+    function getUserPremiumFeatures(
+        address user
+    ) external view returns (PremiumFeatures memory) {
         return premiumFeatures[user];
     }
+
+    // --- Add Getter functions for new storage structure ---
+    /// @notice Get the total number of files uploaded by a user
+    /// @param user The address of the user
+    /// @return The number of files uploaded by the user
+    function getUserFileCount(address user) external view returns (uint256) {
+        return userFileCount[user];
+    }
+
+    /// @notice Get a specific file record for a user by index
+    /// @param user The address of the user
+    /// @param index The index of the file (0-based)
+    /// @return The FileRecord struct at the specified index
+    function getUserFile(
+        address user,
+        uint256 index
+    ) external view returns (FileRecord memory) {
+        require(index < userFileCount[user], "Index out of bounds");
+        return userFilesByIndex[user][index];
+    }
+
+    // --- End Add Getter functions ---
 
     /// @notice Modifier to check if the caller is the owner
     modifier onlyOwner() {
