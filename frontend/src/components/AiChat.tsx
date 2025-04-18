@@ -12,6 +12,7 @@ import {
   Minimize2,
 } from 'lucide-react';
 import { generateResponse } from '../services/ai';
+import { showToast } from '../utils/toast';
 
 interface Message {
   id: string;
@@ -34,6 +35,7 @@ const AiChat = () => {
   const [activeChat, setActiveChat] = useState<Chat | null>(null);
   const [chats, setChats] = useState<Chat[]>([]);
   const [showHistory, setShowHistory] = useState(false);
+  const [currentStreamingMessage, setCurrentStreamingMessage] = useState('');
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Load chats from localStorage
@@ -62,7 +64,7 @@ const AiChat = () => {
   // Scroll to bottom when new messages arrive
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [activeChat?.messages]);
+  }, [activeChat?.messages, currentStreamingMessage]);
 
   const createNewChat = () => {
     const newChat: Chat = {
@@ -79,7 +81,7 @@ const AiChat = () => {
   const handleSend = async () => {
     if (!input.trim() || !activeChat) return;
 
-    const newMessage: Message = {
+    const userMessage: Message = {
       id: Date.now().toString(),
       role: 'user',
       content: input,
@@ -88,7 +90,7 @@ const AiChat = () => {
 
     const updatedChat = {
       ...activeChat,
-      messages: [...activeChat.messages, newMessage],
+      messages: [...activeChat.messages, userMessage],
     };
 
     setChats(chats.map(chat => 
@@ -97,14 +99,32 @@ const AiChat = () => {
     setActiveChat(updatedChat);
     setInput('');
     setIsLoading(true);
+    setCurrentStreamingMessage('');
 
     try {
       const response = await generateResponse(input);
+      
+      if (!response.body) {
+        throw new Error('No response body');
+      }
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let streamedContent = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        
+        const chunk = decoder.decode(value);
+        streamedContent += chunk;
+        setCurrentStreamingMessage(streamedContent);
+      }
 
       const aiMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: response,
+        content: streamedContent,
         timestamp: new Date(),
       };
 
@@ -117,8 +137,10 @@ const AiChat = () => {
         chat.id === activeChat.id ? finalChat : chat
       ));
       setActiveChat(finalChat);
+      setCurrentStreamingMessage('');
     } catch (error) {
       console.error('Failed to get AI response:', error);
+      showToast.error('Failed to get AI response. Please try again.');
       
       const errorMessage: Message = {
         id: (Date.now() + 1).toString(),
@@ -155,31 +177,24 @@ const AiChat = () => {
       <div className="fixed bottom-4 right-4 z-50">
         <Button
           onClick={() => setIsMinimized(false)}
-          className="rounded-full h-12 w-12 p-0"
+          className="flex items-center gap-2"
         >
-          <MessageSquare className="h-6 w-6" />
+          <MessageSquare className="h-5 w-5" />
+          Chat
         </Button>
       </div>
     );
   }
 
   return (
-    <div className="fixed right-4 top-20 w-80 sm:w-96 bg-card rounded-lg shadow-lg border border-border z-40 flex flex-col max-h-[calc(100vh-6rem)]">
+    <div className="fixed bottom-4 right-4 z-50 w-96 h-[600px] bg-background border border-border rounded-lg shadow-lg flex flex-col">
       {/* Header */}
       <div className="p-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2">
           <MessageSquare className="h-5 w-5 text-primary" />
-          <h3 className="font-semibold text-foreground">AI Assistant</h3>
+          <h2 className="font-semibold text-foreground">AI Assistant</h2>
         </div>
-        <div className="flex items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMinimized(true)}
-            className="h-8 w-8"
-          >
-            <Minimize2 className="h-4 w-4" />
-          </Button>
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
@@ -188,12 +203,20 @@ const AiChat = () => {
           >
             <History className="h-4 w-4" />
           </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsMinimized(true)}
+            className="h-8 w-8"
+          >
+            <Minimize2 className="h-4 w-4" />
+          </Button>
         </div>
       </div>
 
       {/* Chat History Sidebar */}
       {showHistory && (
-        <div className="absolute right-full mr-2 w-64 max-h-[calc(100vh-6rem)] bg-card rounded-lg shadow-lg border border-border">
+        <div className="absolute right-full mr-2 w-64 h-full bg-background border border-border rounded-lg shadow-lg">
           <div className="p-4 border-b border-border flex items-center justify-between">
             <h3 className="font-semibold text-foreground">Chat History</h3>
             <Button
@@ -258,7 +281,17 @@ const AiChat = () => {
                 </span>
               </div>
             ))}
-            {isLoading && (
+            {currentStreamingMessage && (
+              <div className="flex flex-col items-start">
+                <div className="max-w-[80%] rounded-lg p-3 bg-muted">
+                  {currentStreamingMessage}
+                </div>
+                <span className="text-xs text-muted-foreground mt-1">
+                  {formatDate(new Date())}
+                </span>
+              </div>
+            )}
+            {isLoading && !currentStreamingMessage && (
               <div className="flex items-center justify-center py-4">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
               </div>

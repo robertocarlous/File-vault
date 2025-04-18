@@ -1,33 +1,45 @@
-// We're using the microsoft/DialoGPT-medium model for chat
-const API_URL = import.meta.env.VITE_HUGGING_FACE_API_URL;
+// We're using the OpenAI gpt-3.5-turbo model for chat
+import OpenAI from 'openai';
 
-// Replace with your Hugging Face API token
-const API_TOKEN = import.meta.env.VITE_HUGGING_FACE_API_TOKEN;
+const openai = new OpenAI({
+  apiKey: import.meta.env.VITE_OPENAI_API_KEY,
+  dangerouslyAllowBrowser: true // Enable browser usage
+});
 
-export async function generateResponse(message: string): Promise<string> {
+export async function generateResponse(message: string) {
   try {
-    const response = await fetch(API_URL, {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${API_TOKEN}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        inputs: {
-          text: message,
-          max_length: 100,
+    const response = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: 'You are a helpful AI assistant specializing in Web3, blockchain, and file management. You help users understand decentralized storage, IPFS, and related technologies.',
         },
-      }),
+        {
+          role: 'user',
+          content: message,
+        },
+      ],
+      stream: true,
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    // Create a ReadableStream that properly handles the OpenAI stream
+    const stream = new ReadableStream({
+      async start(controller) {
+        for await (const chunk of response) {
+          const text = chunk.choices[0]?.delta?.content || '';
+          if (text) {
+            controller.enqueue(new TextEncoder().encode(text));
+          }
+        }
+        controller.close();
+      },
+    });
 
-    const data = await response.json();
-    return data[0]?.generated_text || "I'm sorry, I couldn't generate a response.";
+    // Return the properly formatted streaming response
+    return new Response(stream);
   } catch (error) {
     console.error("Error calling AI API:", error);
-    return "Sorry, I encountered an error. Please try again later.";
+    throw error;
   }
 }
