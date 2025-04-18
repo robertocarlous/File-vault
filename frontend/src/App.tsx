@@ -15,6 +15,8 @@ import Settings from "./pages/Settings";
 import Recent from "./pages/Recent";
 import Shared from "./pages/Shared";
 import "./styles/theme.css";
+import { ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 function App() {
   return (
@@ -70,6 +72,7 @@ function App() {
                 </Routes>
               </main>
               <Footer />
+              <ToastContainer />
             </div>
           </Router>
         </ThemeProvider>

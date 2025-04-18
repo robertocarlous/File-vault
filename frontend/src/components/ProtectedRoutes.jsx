@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 // import { useRouter } from 'next/router'; // For Next.js
 import { useNavigate } from 'react-router-dom';
 import { useAccount } from 'wagmi';
+import { showToast } from '../utils/toast';
 
 // Higher-order component to protect routes requiring wallet connection
 // export const ProtectedRoute = ({ children }) => {
@@ -27,6 +28,7 @@ export const ProtectedRoute = ({ children }) => {
 
   useEffect(() => {
     if (!isConnected) {
+      showToast.warning('Please connect your wallet to access this page');
       navigate('/', { replace: true });
     }
   }, [isConnected, navigate]);

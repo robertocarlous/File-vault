@@ -6,6 +6,7 @@ import AiChat from '../components/AiChat';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import contractAbiJson from '../../contracts/abi.json';
 import { config } from '../config/wagmi';
+import { showToast } from '../utils/toast';
 
 const contractAbi = contractAbiJson;
 
@@ -79,6 +80,7 @@ const FileManager: React.FC = () => {
 
     if (isTxSuccess && writeData) {
       console.log('Transaction successful');
+      showToast.success('File registration successful on blockchain!');
       setCidToRegister(null);
       setFileTypeToRegister(null);
       setEncryptedKeyToRegister(null);
@@ -99,8 +101,7 @@ const FileManager: React.FC = () => {
       } else if (txError.message.includes("insufficient funds")) {
         userMessage = "Transaction failed: Insufficient funds for gas.";
       }
-      // Add more specific checks here if needed
-
+      showToast.error(userMessage);
       setRegisterError(userMessage);
       setIsRegistering(false);
     }
@@ -122,8 +123,7 @@ const FileManager: React.FC = () => {
       } else if (writeError.message.includes("insufficient funds")) {
         userMessage = "Contract Error: Insufficient funds.";
       }
-      // Add more specific checks here if needed
-
+      showToast.error(userMessage);
       setRegisterError(userMessage);
       setIsRegistering(false);
       // Reset state if write fails
@@ -136,35 +136,30 @@ const FileManager: React.FC = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      if (file.size > 100 * 1024 * 1024) { // 100MB limit
+        showToast.error('File size exceeds 100MB limit');
+        return;
+      }
       setSelectedFile(file);
+      showToast.info(`Selected file: ${file.name}`);
       setError(null);
-      setRegisterError(null);
-      setTxHash(null);
-      setCidToRegister(null);
-      setFileTypeToRegister(null);
-      setEncryptedKeyToRegister(null);
+      setUploadProgress(0);
     }
   };
 
   const handleUpload = async () => {
     if (!selectedFile) {
-      setError("Please select a file to upload.");
+      showToast.error('Please select a file first');
       return;
     }
-    if (!userAddress) {
-      setError("Please connect your wallet.");
-      return;
-    }
-
+    
     setIsUploading(true);
-    setUploadProgress(0);
     setError(null);
-    setRegisterError(null);
-    setTxHash(null);
-
-    const generatedKey = Math.random().toString(36).substring(2);
+    setUploadProgress(0);
 
     try {
+      const generatedKey = Math.random().toString(36).substring(2);
+
       const apiKey = import.meta.env.VITE_LIGHTHOUSE_API_KEY;
       if (!apiKey) {
         throw new Error("Lighthouse API key needs to be set in .env file");
@@ -210,6 +205,7 @@ const FileManager: React.FC = () => {
       // --- Upload Succeeded --- 
       setUploadProgress(100);
       setIsUploading(false);
+      showToast.success(`File ${selectedFile.name} uploaded successfully!`);
 
       const newFile: FileItem = {
         name: selectedFile.name,
@@ -284,6 +280,7 @@ const FileManager: React.FC = () => {
         file.cid === cid ? { ...file, isHidden: true } : file
       )
     );
+    showToast.success('File hidden successfully');
   };
 
   const handleArchive = (cid: string) => {
@@ -292,6 +289,11 @@ const FileManager: React.FC = () => {
         file.cid === cid ? { ...file, isArchived: true } : file
       )
     );
+    showToast.success('File archived successfully');
+  };
+
+  const handleDownload = (fileName: string) => {
+    showToast.success(`Downloading ${fileName}...`);
   };
 
   const formatBytes = (bytes: number): string => {
@@ -412,7 +414,7 @@ const FileManager: React.FC = () => {
                           href={`https://gateway.lighthouse.storage/ipfs/${file.cid}`}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center w-full sm:w-auto"
+                          onClick={() => handleDownload(file.name)}
                         >
                           <Button
                             variant="outline"
@@ -482,6 +484,7 @@ const FileManager: React.FC = () => {
                             href={`https://gateway.lighthouse.storage/ipfs/${file.cid}`}
                             target="_blank"
                             rel="noopener noreferrer"
+                            onClick={() => handleDownload(file.name)}
                           >
                             <Button variant="outline" size="sm">
                               <Download className="h-4 w-4 mr-2" />
