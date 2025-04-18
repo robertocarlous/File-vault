@@ -5,6 +5,8 @@ import { Button } from "./ui/button";
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useAccount } from 'wagmi';
+import { showToast } from '../utils/toast';
 
 interface NavLink {
   href: string;
@@ -16,6 +18,7 @@ const Navbar = () => {
   const [hasScrolled, setHasScrolled] = useState(false);
   const [mounted, setMounted] = useState(false);
   const { theme, toggleTheme } = useTheme();
+  const { isConnected } = useAccount();
 
   // Array of navigation links
   const navLinks: NavLink[] = [
@@ -35,6 +38,12 @@ const Navbar = () => {
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
+
+  useEffect(() => {
+    if (isConnected) {
+      showToast.success('Wallet connected successfully!');
+    }
+  }, [isConnected]);
 
   if (!mounted) return null;
 

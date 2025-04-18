@@ -3,12 +3,14 @@ import { ArrowRight, Shield, Database, Coins } from "lucide-react";
 import { motion, useAnimation } from "framer-motion";
 import { useTheme } from "../context/ThemeContext";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import "../pages/style/anim.css";
 // import { useScrollAnimation } from "./useScrollAnimation"; // adjust path as needed
 
 const Hero = () => {
   const controls = useAnimation();
   const { theme, toggleTheme } = useTheme();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const runAnimation = async () => {
@@ -76,13 +78,7 @@ const Hero = () => {
             >
               <Button
                 className="gap-2"
-                onClick={() => {
-                  const fileManagerElement =
-                    document.getElementById("file-manager");
-                  if (fileManagerElement) {
-                    fileManagerElement.scrollIntoView({ behavior: "smooth" });
-                  }
-                }}
+                onClick={() => navigate('/files')}
               >
                 Start Uploading
                 <ArrowRight className="h-4 w-4" />
