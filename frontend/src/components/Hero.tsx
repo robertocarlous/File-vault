@@ -9,7 +9,7 @@ import "../pages/style/anim.css";
 
 const Hero = () => {
   const controls = useAnimation();
-  const { theme, toggleTheme } = useTheme();
+  const { theme } = useTheme();
   const navigate = useNavigate();
 
   useEffect(() => {
