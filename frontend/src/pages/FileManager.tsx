@@ -1,11 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Upload, Download, File, EyeOff, Archive } from 'lucide-react';
-import lighthouse from '@lighthouse-web3/sdk';
 import AiChat from '../components/AiChat';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import contractAbiJson from '../../contracts/abi.json';
-import { config } from '../config/wagmi';
 import { showToast } from '../utils/toast';
 
 const contractAbi = contractAbiJson;
@@ -27,14 +25,14 @@ const FileManager: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [cidToRegister, setCidToRegister] = useState<string | null>(null);
-  const [fileTypeToRegister, setFileTypeToRegister] = useState<string | null>(null);
-  const [encryptedKeyToRegister, setEncryptedKeyToRegister] = useState<string | null>(null);
+  // const [cidToRegister, setCidToRegister] = useState<string | null>(null);
+  // const [fileTypeToRegister, setFileTypeToRegister] = useState<string | null>(null);
+  // const [encryptedKeyToRegister, setEncryptedKeyToRegister] = useState<string | null>(null);
   const [isRegistering, setIsRegistering] = useState(false);
   const [registerError, setRegisterError] = useState<string | null>(null);
   const [txHash, setTxHash] = useState<string | null>(null);
 
-  const { address: userAddress } = useAccount();
+  // const { address: userAddress } = useAccount();
 
   useEffect(() => {
     const savedFiles = localStorage.getItem("uploadedFiles");
@@ -81,9 +79,9 @@ const FileManager: React.FC = () => {
     if (isTxSuccess && writeData) {
       console.log('Transaction successful');
       showToast.success('File registration successful on blockchain!');
-      setCidToRegister(null);
-      setFileTypeToRegister(null);
-      setEncryptedKeyToRegister(null);
+      // setCidToRegister(null);
+      // setFileTypeToRegister(null);
+      // setEncryptedKeyToRegister(null);
       setIsRegistering(false);
       setRegisterError(null);
     }
@@ -127,9 +125,9 @@ const FileManager: React.FC = () => {
       setRegisterError(userMessage);
       setIsRegistering(false);
       // Reset state if write fails
-      setCidToRegister(null);
-      setFileTypeToRegister(null);
-      setEncryptedKeyToRegister(null);
+      // setCidToRegister(null);
+      // setFileTypeToRegister(null);
+      // setEncryptedKeyToRegister(null);
     }
   }, [isWriteError, writeError]);
 
@@ -217,15 +215,15 @@ const FileManager: React.FC = () => {
       };
 
       setUploadedFiles((prev) => [...prev, newFile]);
-      const currentSelectedFile = selectedFile; // Capture file before setting to null
+      // const currentSelectedFile = selectedFile; // Capture file before setting to null
       setSelectedFile(null);
 
       console.log("IPFS upload successful! Preparing blockchain registration...");
 
       // Set states for blockchain registration
-      setCidToRegister(finalCid);
-      setFileTypeToRegister(finalFileType);
-      setEncryptedKeyToRegister(generatedKey);
+      // setCidToRegister(finalCid);
+      // setFileTypeToRegister(finalFileType);
+      // setEncryptedKeyToRegister(generatedKey);
       setRegisterError(null);
 
       // --- Re-enable Blockchain Registration --- 
@@ -268,9 +266,9 @@ const FileManager: React.FC = () => {
       setIsRegistering(false);
       setUploadProgress(0);
       // Reset potentially set registration states
-      setCidToRegister(null);
-      setFileTypeToRegister(null);
-      setEncryptedKeyToRegister(null);
+      // setCidToRegister(null);
+      // setFileTypeToRegister(null);
+      // setEncryptedKeyToRegister(null);
     }
   };
 
