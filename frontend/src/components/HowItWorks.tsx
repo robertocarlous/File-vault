@@ -39,14 +39,15 @@ const container = {
   },
 };
 
-const item = {
-  hidden: { opacity: 0, y: 200 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.8, ease: "easeOut" },
-  },
-};
+// const item = {
+//   hidden: { opacity: 0, y: 200 },
+//   show: {
+//     opacity: 1,
+//     y: 0,
+//     transition: { duration: 0.8, ease: "easeOut" },
+//   },
+// };
+
 const HowItWorks = () => {
   // const fadeInUp1 = useScrollAnimation();
   const fadeInUp2 = useScrollAnimation();

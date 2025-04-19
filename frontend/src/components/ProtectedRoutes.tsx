@@ -22,7 +22,7 @@ import { showToast } from '../utils/toast';
 // };
 
 // For React Router (if not using Next.js)
-export const ProtectedRoute = ({ children }) => {
+export const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const navigate = useNavigate();
   const { isConnected } = useAccount();
 
