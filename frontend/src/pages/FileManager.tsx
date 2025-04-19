@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Button } from '../components/ui/button';
 import { Upload, Download, File, EyeOff, Archive } from 'lucide-react';
 import AiChat from '../components/AiChat';
-import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import contractAbiJson from '../../contracts/abi.json';
 import { showToast } from '../utils/toast';
 
